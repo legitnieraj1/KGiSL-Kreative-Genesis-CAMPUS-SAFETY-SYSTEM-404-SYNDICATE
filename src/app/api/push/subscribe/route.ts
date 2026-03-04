@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     const subscription = await request.json();
 
     const { supabaseAdmin, isSupabaseConfigured } = await import("@/lib/supabase");
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabaseAdmin) {
       return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
     }
 
@@ -37,7 +37,7 @@ export async function DELETE(request: NextRequest) {
     const { endpoint } = await request.json();
 
     const { supabaseAdmin, isSupabaseConfigured } = await import("@/lib/supabase");
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabaseAdmin) {
       return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
     }
 

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Get all push subscriptions from Supabase
     const { supabaseAdmin, isSupabaseConfigured } = await import("@/lib/supabase");
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabaseAdmin) {
       return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
     }
 

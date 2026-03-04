@@ -314,8 +314,21 @@ export function useSensorData(): AppState {
       };
     }
 
-    // Try connecting: SSE first (for local dev), then Supabase, then mock
-    connectSSE();
+    // On production (Supabase configured), skip SSE and go straight to Supabase Realtime
+    // SSE only works on local dev (single Node.js process, in-memory state)
+    const hasSupabase = !!(
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    if (hasSupabase) {
+      setConnection("reconnecting");
+      trySupabaseRealtime().then((connected) => {
+        if (!connected) startMockMode();
+      });
+    } else {
+      connectSSE();
+    }
 
     return () => {
       eventSource?.close();

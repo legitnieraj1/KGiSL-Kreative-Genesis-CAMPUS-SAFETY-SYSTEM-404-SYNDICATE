@@ -115,7 +115,7 @@ export default function AIInsightsCard({ sensorData, isAlert, seismicHistory, ga
             </svg>
           </div>
           <span className="text-sm font-semibold text-[var(--color-foreground)]">AI Safety Analysis</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400">GEMINI</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400">OPENROUTER</span>
         </div>
         {loading && (
           <div className="w-4 h-4 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />

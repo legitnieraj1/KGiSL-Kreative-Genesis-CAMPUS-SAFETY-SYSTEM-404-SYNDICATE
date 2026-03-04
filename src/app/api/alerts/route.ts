@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const { supabaseAdmin, isSupabaseConfigured } = await import("@/lib/supabase");
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabaseAdmin) {
       return NextResponse.json([]);
     }
 

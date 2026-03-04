@@ -5,7 +5,7 @@ import { ingestSensorData, getState } from "@/lib/sensorStore";
 async function getSupabaseAdmin() {
   try {
     const { supabaseAdmin, isSupabaseConfigured } = await import("@/lib/supabase");
-    if (!isSupabaseConfigured()) return null;
+    if (!isSupabaseConfigured() || !supabaseAdmin) return null;
     return supabaseAdmin;
   } catch {
     return null;
@@ -30,14 +30,10 @@ async function sendPushNotifications(alertType: string, severity: string, messag
 
 async function getAIAnalysis(sensorData: Record<string, unknown>): Promise<string | null> {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) return null;
 
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const prompt = `You are SafetyHub AI, a campus safety monitoring system. Analyze these sensor readings and respond in 2-3 concise sentences:
+    const prompt = `You are SafetyHub AI, a campus safety monitoring system. Analyze these sensor readings and respond in 2-3 concise sentences only. No markdown, no bullet points.
 
 Sensor Data:
 - Acceleration Magnitude: ${sensorData.accelMag}G (threshold: 2.5G for earthquake)
@@ -46,10 +42,26 @@ Sensor Data:
 - Humidity: ${sensorData.humidity}%
 - Current Alert: ${sensorData.alert}
 
-Provide: 1) What's happening 2) Risk assessment 3) Recommended action. Be specific and actionable. Do NOT use markdown formatting.`;
+Provide: 1) What's happening 2) Risk assessment 3) Recommended action. Be specific and actionable.`;
 
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://campussafetysystemkgislhackathon.vercel.app",
+        "X-Title": "SafetyHub Campus Monitor",
+      },
+      body: JSON.stringify({
+        model: "stepfun/step-3.5-flash:free",
+        messages: [{ role: "user", content: prompt }],
+        reasoning: { enabled: true },
+      }),
+    });
+
+    if (!response.ok) return null;
+    const result = await response.json();
+    return result.choices[0].message.content || null;
   } catch (error) {
     console.error("AI analysis failed:", error);
     return null;

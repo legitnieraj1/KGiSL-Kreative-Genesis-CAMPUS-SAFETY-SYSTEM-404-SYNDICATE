@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getState } from "@/lib/sensorStore";
 
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const MODEL = "stepfun/step-3.5-flash:free";
+
 export async function POST(request: NextRequest) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+    if (!OPENROUTER_API_KEY) {
+      return NextResponse.json({ error: "OpenRouter API key not configured" }, { status: 500 });
     }
 
     const { message, conversationHistory } = await request.json();
@@ -14,32 +16,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
     // Get current sensor state for context
     const currentState = getState();
 
-    // Also try to get from Supabase for richer context
+    // Try to get recent readings from Supabase for richer context
     let recentReadings = "";
     try {
       const { supabaseAdmin, isSupabaseConfigured } = await import("@/lib/supabase");
-      if (isSupabaseConfigured()) {
+      if (isSupabaseConfigured() && supabaseAdmin) {
         const { data } = await supabaseAdmin
           .from("sensor_readings")
           .select("*")
           .order("created_at", { ascending: false })
           .limit(5);
         if (data && data.length > 0) {
-          recentReadings = `\nRecent readings from database:\n${data.map((r) => `  Mag:${r.accel_mag}G Gas:${r.gas_level} Temp:${r.temperature}°C at ${r.created_at}`).join("\n")}`;
+          recentReadings = `\nRecent DB readings:\n${data
+            .map((r) => `  Mag:${r.accel_mag}G Gas:${r.gas_level} Temp:${r.temperature}°C at ${r.created_at}`)
+            .join("\n")}`;
         }
       }
     } catch {
       // Supabase not available, continue with in-memory state
     }
 
-    const systemPrompt = `You are SafetyHub AI Assistant, the intelligent safety monitoring system for Sri Krishna College campus. You help campus security personnel, students, and faculty understand the current safety status of their campus.
+    const systemPrompt = `You are SafetyHub AI Assistant, the intelligent safety monitoring system for Sri Krishna College campus. You help campus security personnel, students, and faculty understand the current safety status.
 
 CURRENT LIVE SENSOR DATA:
 ${currentState ? `
@@ -51,39 +51,55 @@ ${currentState ? `
 - Alert Active: ${currentState.alert.active ? `YES - ${currentState.alert.type} (${currentState.alert.severity})` : "No"}
 - Alert Message: ${currentState.alert.message}
 - Sensor Online: ${currentState.sensorHealth.online}
-- Uptime: ${Math.floor(currentState.sensorHealth.uptime / 60000)} minutes
-` : "No live data available - sensors may be offline"}
+` : "No live data available — sensors may be offline"}
 ${recentReadings}
 
 THRESHOLDS:
 - Earthquake: ≥2.5G = CRITICAL
-- Gas: >800 = CRITICAL (DANGER), >400 = WARNING (MODERATE), <400 = GOOD
+- Gas: >800 = DANGER, >400 = WARNING, <400 = GOOD
 - Temperature: >45°C = CRITICAL, >35°C = WARNING
 
 RULES:
 - Be concise (2-4 sentences max)
-- If asked about safety, give a clear YES/NO first, then explain
-- Reference actual sensor values in your answers
+- If asked about safety, answer YES/NO first, then explain
+- Reference actual sensor values
 - If sensors are offline, say so clearly
-- Suggest evacuation only for CRITICAL alerts
-- Be calm and professional, avoid unnecessary alarm`;
+- Suggest evacuation only for CRITICAL alerts`;
 
-    // Build conversation
-    const history = (conversationHistory || []).map((msg: { role: string; content: string }) => ({
-      role: msg.role === "user" ? "user" : "model",
-      parts: [{ text: msg.content }],
-    }));
+    // Build messages: system as first user turn (OpenRouter compatible)
+    const messages: { role: string; content: string }[] = [
+      { role: "user", content: systemPrompt },
+      { role: "assistant", content: "Understood. I'm SafetyHub AI, ready to assist with campus safety. I have access to live sensor data and will give clear, actionable answers." },
+      // Inject conversation history
+      ...(conversationHistory || []).map((msg: { role: string; content: string }) => ({
+        role: msg.role === "user" ? "user" : "assistant",
+        content: msg.content,
+      })),
+      // Current user message
+      { role: "user", content: message },
+    ];
 
-    const chat = model.startChat({
-      history: [
-        { role: "user", parts: [{ text: "System context: " + systemPrompt }] },
-        { role: "model", parts: [{ text: "Understood. I'm SafetyHub AI, ready to help with campus safety monitoring. I have access to the current sensor data and will provide clear, actionable safety information." }] },
-        ...history,
-      ],
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://campussafetysystemkgislhackathon.vercel.app",
+        "X-Title": "SafetyHub Campus Monitor",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        reasoning: { enabled: true },
+      }),
     });
 
-    const result = await chat.sendMessage(message);
-    const responseText = result.response.text();
+    if (!response.ok) {
+      throw new Error(`OpenRouter error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    const responseText = result.choices[0].message.content || "Unable to generate response.";
 
     return NextResponse.json({
       response: responseText,
