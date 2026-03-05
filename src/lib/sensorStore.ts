@@ -156,8 +156,8 @@ function broadcast(state: ProcessedState): void {
 
 export function ingestSensorData(
   payload: SensorPayload,
-  zoneId: string = "skasc-seminar-hall-1",
-  zoneName: string = "SKASC - Seminar Hall 1"
+  zoneId: string = "kgisl-seminar-hall-1",
+  zoneName: string = "KGiSL - Seminar Hall 1"
 ): { success: boolean; error?: string } {
   // ─── Validate ───
   const mag = validateRange(payload.accelMag, 0, 20);

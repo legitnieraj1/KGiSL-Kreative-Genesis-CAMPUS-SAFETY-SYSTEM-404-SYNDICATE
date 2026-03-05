@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const { sensorData, history } = await request.json();
 
-    const prompt = `You are SafetyHub AI, an advanced campus safety monitoring system for Sri Krishna College. Analyze the following real-time sensor data and provide a comprehensive safety assessment.
+    const prompt = `You are SafetyHub AI, an advanced campus safety monitoring system for KGiSL. Analyze the following real-time sensor data and provide a comprehensive safety assessment.
 
 CURRENT SENSOR READINGS:
 - Seismic Activity: ${sensorData?.seismic?.magnitude || 0}G (Earthquake threshold: 2.5G)

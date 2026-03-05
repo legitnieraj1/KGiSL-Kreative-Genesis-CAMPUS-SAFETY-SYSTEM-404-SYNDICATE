@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SafetyHub — Campus Emergency Alert System",
-  description: "Real-time multi-hazard monitoring and alert platform for Sri Krishna College",
+  description: "Real-time multi-hazard monitoring and alert platform for KGiSL",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

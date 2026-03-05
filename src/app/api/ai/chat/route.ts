@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       // Supabase not available, continue with in-memory state
     }
 
-    const systemPrompt = `You are SafetyHub AI Assistant, the intelligent safety monitoring system for Sri Krishna College campus. You help campus security personnel, students, and faculty understand the current safety status.
+    const systemPrompt = `You are SafetyHub AI Assistant, the intelligent safety monitoring system for KGiSL campus. You help campus security personnel, students, and faculty understand the current safety status.
 
 CURRENT LIVE SENSOR DATA:
 ${currentState ? `

@@ -20,7 +20,7 @@ export default function Header({ alerts }: HeaderProps) {
           Safety Hub
         </p>
         <h1 className="text-xl font-bold text-white mt-0.5">
-          SRI KRISHNA COLLEGE
+          KGiSL
         </h1>
       </div>
 

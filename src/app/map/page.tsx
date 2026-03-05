@@ -36,7 +36,7 @@ export default function MapPage() {
           {/* Zone marker */}
           <div className="relative z-10 flex flex-col items-center justify-center py-16">
             <div className="w-4 h-4 bg-teal rounded-full mb-3 animate-live-pulse shadow-[0_0_12px_rgba(0,255,204,0.5)]" />
-            <p className="text-sm font-semibold text-white">SKASC - Seminar Hall 1</p>
+            <p className="text-sm font-semibold text-white">KGiSL - Seminar Hall 1</p>
             <p className="text-xs text-teal mt-1">Active Monitoring</p>
           </div>
         </div>

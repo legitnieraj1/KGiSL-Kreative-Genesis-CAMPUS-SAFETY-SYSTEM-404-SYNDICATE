@@ -24,7 +24,7 @@ export default function SettingsPage() {
 
             <div className="flex justify-between items-center">
               <span className="text-xs text-muted">Zone</span>
-              <span className="text-xs text-white font-mono">SKASC - Seminar Hall 1</span>
+              <span className="text-xs text-white font-mono">KGiSL - Seminar Hall 1</span>
             </div>
             <div className="h-px bg-card-border" />
 

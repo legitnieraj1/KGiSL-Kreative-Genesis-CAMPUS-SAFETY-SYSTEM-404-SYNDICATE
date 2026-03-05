@@ -97,8 +97,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No sensor data" }, { status: 400 });
     }
 
-    const zoneId = body.zoneId || "skasc-seminar-hall-1";
-    const zoneName = body.zoneName || "SKASC - Seminar Hall 1";
+    const zoneId = body.zoneId || "kgisl-seminar-hall-1";
+    const zoneName = body.zoneName || "KGiSL - Seminar Hall 1";
 
     // Get previous state for alert change detection
     const prevState = getState();
